@@ -13,6 +13,8 @@ public class TopicLoader {
 
     private String lastId = "";
     private boolean isEnd = false;
+    private String topicId = "58d8aaa439765500116ab33b";
+    private String topicName = "少女馆写真有更新";
 
     public TopicLoader() {
 
@@ -28,7 +30,7 @@ public class TopicLoader {
     private void loadOnce() throws IOException {
         Request request
                 = HttpManager.getJKPostJSONRequest("https://app.jike.ruguoapp.com/1.0/users/messages/history",
-                "{\"loadMoreKey\":\"" + lastId + "\",\"topic\":\"58b6480a2275da0014628065\"}");
+                "{\"loadMoreKey\":\"" + lastId + "\",\"topic\":\""+topicId+"\"}");
         String str = HttpLoader.load(request);
         Gson gson = new Gson();
         TopicResult topicResult = gson.fromJson(str, TopicResult.class);
@@ -65,7 +67,7 @@ public class TopicLoader {
             sb.append(content + "\r\n");
             sb.append(databean.getContent());
 
-            filePersist.onPersist("picture", name, id, sb.toString(), databean.getPictureUrls());
+            filePersist.onPersist(topicName, "picture", name, id, sb.toString(), databean.getPictureUrls());
         }
 
     }

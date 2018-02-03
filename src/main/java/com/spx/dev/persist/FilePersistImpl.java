@@ -10,8 +10,8 @@ public class FilePersistImpl implements IPersistence {
     public static final String ROOT = "d:/data/jike";
 
     @Override
-    public void onPersist(String type, String subDirName, String id,  String textContent, List<TopicResult.Databean.PictureUrlsbean> pictures) throws IOException {
-        File rootFile = new File(ROOT, type);
+    public void onPersist(String tipicName, String type, String subDirName, String id,  String textContent, List<TopicResult.Databean.PictureUrlsbean> pictures) throws IOException {
+        File rootFile = new File(ROOT+"/"+type, tipicName);
         if (!rootFile.exists()) {
             rootFile.mkdirs();
         }

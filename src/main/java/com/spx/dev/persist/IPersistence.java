@@ -6,5 +6,5 @@ import java.io.IOException;
 import java.util.List;
 
 public interface IPersistence {
-    void onPersist(String type,String subDirName,String id, String textContent, List<TopicResult.Databean.PictureUrlsbean> pictures) throws IOException;
+    void onPersist(String tipicName,String type,String subDirName,String id, String textContent, List<TopicResult.Databean.PictureUrlsbean> pictures) throws IOException;
 }
