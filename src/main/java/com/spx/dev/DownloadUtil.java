@@ -3,10 +3,14 @@ package com.spx.dev;
 import com.spx.dev.persist.FilePersistImpl;
 import okhttp3.*;
 
+import javax.net.ssl.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.concurrent.TimeUnit;
 
 public class DownloadUtil {
@@ -22,10 +26,51 @@ public class DownloadUtil {
     }
 
     private DownloadUtil() {
-        okHttpClient =  new OkHttpClient.Builder()
-                .connectTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
-                .build();
+        okHttpClient =  getUnsafeOkHttpClient();
+//                .build();
+    }
+
+    private static OkHttpClient getUnsafeOkHttpClient() {
+        try {
+            // Create a trust manager that does not validate certificate chains
+            final TrustManager[] trustAllCerts = new TrustManager[] {
+                    new X509TrustManager() {
+                        @Override
+                        public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) {
+                        }
+
+                        @Override
+                        public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) {
+                        }
+
+                        @Override
+                        public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                            return new java.security.cert.X509Certificate[]{};
+                        }
+                    }
+            };
+
+            // Install the all-trusting trust manager
+            final SSLContext sslContext = SSLContext.getInstance("SSL");
+            sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+            // Create an ssl socket factory with our all-trusting manager
+            final javax.net.ssl.SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+
+            OkHttpClient.Builder builder = new OkHttpClient.Builder();
+            builder.sslSocketFactory(sslSocketFactory);
+            builder.hostnameVerifier(new HostnameVerifier() {
+                @Override
+                public boolean verify(String hostname, SSLSession session) {
+                    return true;
+                }
+            });
+
+            OkHttpClient okHttpClient = builder.connectTimeout(30, TimeUnit.SECONDS)
+                    .readTimeout(30, TimeUnit.SECONDS).build();
+            return okHttpClient;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -33,7 +78,26 @@ public class DownloadUtil {
      * @param saveDir  储存下载文件的SDCard目录
      */
     public void download(final String url, final String saveDir, String name) throws IOException {
-        Request request = new Request.Builder().url(url).build();
+        //log拦截器 打印所有的log
+//        HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor(new HttpLoggingInterceptor.Logger() {
+//            @Override
+//            public void log(String message) {
+//                LogUtils.e("HttpLog",message);
+//            }
+//        });
+//        loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+        Request request = //new Request.Builder().url(url).build();
+        new Request.Builder()
+                .addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+                .addHeader("Accept-Encoding", "gzip, deflate, br")
+                .addHeader("Accept-Language", "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2")
+                .addHeader("Cache-Control", "no-cache")
+                .addHeader("Connection", "Keep-Alive")
+                .addHeader("Host", "cdn.ruguoapp.com")
+                .addHeader("Pragma", "no-cache")
+                .addHeader("Upgrade-Insecure-Requests", "1")
+                .addHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:57.0) Gecko/20100101 Firefox/57.0")
+                .url(url).build();
         Response response = okHttpClient.newCall(request).execute();
         InputStream is = null;
         byte[] buf = new byte[2048];
@@ -51,13 +115,16 @@ public class DownloadUtil {
                 fos.write(buf, 0, len);
                 sum += len;
                 int progress = (int) (sum * 1.0f / total * 100);
+//                System.out.println(""+progress);
                 // 下载中
 //                listener.onDownloading(progress);
             }
             fos.flush();
+            fos.close();
             // 下载完成
 //            listener.onDownloadSuccess();
         } catch (Exception e) {
+            e.printStackTrace();
 //            listener.onDownloadFailed();
         } finally {
             try {
@@ -123,4 +190,47 @@ public class DownloadUtil {
          */
         void onDownloadFailed();
     }
+
+    /**
+     * 默认信任所有的证书
+     * TODO 最好加上证书认证，主流App都有自己的证书
+     *
+     * @return
+     */
+    private static SSLSocketFactory createSSLSocketFactory() {
+        SSLSocketFactory sSLSocketFactory = null;
+        try {
+            SSLContext sc = SSLContext.getInstance("TLS");
+            sc.init(null, new TrustManager[]{new TrustAllManager()},
+                    new SecureRandom());
+            sSLSocketFactory = sc.getSocketFactory();
+        } catch (Exception e) {
+        }
+        return sSLSocketFactory;
+    }
+
+    private static class TrustAllManager implements X509TrustManager {
+        @Override
+        public void checkClientTrusted(X509Certificate[] chain, String authType)
+                throws CertificateException {
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] chain, String authType)
+                throws CertificateException {
+        }
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers() {
+            return new X509Certificate[0];
+        }
+    }
+
+    private static class TrustAllHostnameVerifier implements HostnameVerifier {
+        @Override
+        public boolean verify(String hostname, SSLSession session) {
+            return true;
+        }
+    }
+
 }
