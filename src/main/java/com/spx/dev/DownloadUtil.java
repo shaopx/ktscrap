@@ -86,17 +86,20 @@ public class DownloadUtil {
 //            }
 //        });
 //        loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+        String host = url.substring(7);
+        host = host.substring(0, host.indexOf("/"));
         Request request = //new Request.Builder().url(url).build();
-        new Request.Builder()
-                .addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-                .addHeader("Accept-Encoding", "gzip, deflate, br")
-                .addHeader("Accept-Language", "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2")
-                .addHeader("Cache-Control", "no-cache")
-                .addHeader("Connection", "Keep-Alive")
-                .addHeader("Host", "cdn.ruguoapp.com")
-                .addHeader("Pragma", "no-cache")
-                .addHeader("Upgrade-Insecure-Requests", "1")
-                .addHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:57.0) Gecko/20100101 Firefox/57.0")
+        HttpManager.getMimiDownloadBuilder(host)
+//        new Request.Builder()
+//                .addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+//                .addHeader("Accept-Encoding", "gzip, deflate, br")
+//                .addHeader("Accept-Language", "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2")
+//                .addHeader("Cache-Control", "no-cache")
+//                .addHeader("Connection", "Keep-Alive")
+//                .addHeader("Host", "cdn.ruguoapp.com")
+//                .addHeader("Pragma", "no-cache")
+//                .addHeader("Upgrade-Insecure-Requests", "1")
+//                .addHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:57.0) Gecko/20100101 Firefox/57.0")
                 .url(url).build();
         Response response = okHttpClient.newCall(request).execute();
         InputStream is = null;

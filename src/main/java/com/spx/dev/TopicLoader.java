@@ -6,10 +6,7 @@ import com.spx.dev.persist.FilePersistImpl;
 import okhttp3.*;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 public class TopicLoader {
@@ -22,7 +19,7 @@ public class TopicLoader {
     static{
         topics.put("58d8aaa439765500116ab33b", "少女馆写真有更新");
         topics.put("5a151d2b9608fd0016c48a1d", "主要就是美女");
-        topics.put("59bd45f2d09f940016b33dd0", "美女模特高清");
+        topics.put("59bd45f2d09f940016b33dd0", "美女模特高清无水印图");
     }
 
     private static  String topicId = "59bd45f2d09f940016b33dd0";
@@ -32,7 +29,7 @@ public class TopicLoader {
 
     }
 
-    private void load() throws InterruptedException, IOException {
+    public void load() throws InterruptedException, IOException {
         while (!isEnd) {
             loadOnce();
             Thread.sleep(1000);
@@ -84,7 +81,16 @@ public class TopicLoader {
             sb.append(databean.getContent());
 
             try {
-                filePersist.onPersist(topicName, "picture", name, id, sb.toString(), databean.getPictureUrls());
+                List<JPicture> imageUrls = new ArrayList<>();
+                List<TopicResult.Databean.PictureUrlsbean> pictureUrls = databean.getPictureUrls();
+                for (int i1 = 0; i1 < pictureUrls.size(); i1++) {
+                    TopicResult.Databean.PictureUrlsbean pictureUrlsbean = pictureUrls.get(i1);
+                    JPicture picture = new JPicture();
+                    picture.url = pictureUrlsbean.getPicUrl();
+                    picture.format=pictureUrlsbean.getFormat();
+                    imageUrls.add(picture);
+                }
+                filePersist.onPersist(topicName, "picture", name, id, sb.toString(),imageUrls );
             }catch (Exception ex){
                 ex.printStackTrace();
             }

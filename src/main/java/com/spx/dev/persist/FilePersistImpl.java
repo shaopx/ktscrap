@@ -1,6 +1,7 @@
 package com.spx.dev.persist;
 
 import com.spx.dev.DownloadUtil;
+import com.spx.dev.JPicture;
 import com.spx.dev.domain.TopicResult;
 
 import java.io.*;
@@ -8,10 +9,18 @@ import java.util.List;
 
 public class FilePersistImpl implements IPersistence {
     public static final String ROOT = "d:/data/jike";
+    private String rootDir = ROOT;
+    public FilePersistImpl(){
+        this(ROOT);
+    }
+    public FilePersistImpl(String root){
+        rootDir = root;
+    }
 
     @Override
-    public void onPersist(String tipicName, String type, String subDirName, String id,  String textContent, List<TopicResult.Databean.PictureUrlsbean> pictures) throws IOException {
-        File rootFile = new File(ROOT+"/"+type, tipicName);
+    public void onPersist(String tipicName, String type, String subDirName, String id,  String textContent, List<JPicture> pictures) throws IOException {
+        System.out.println("tipicName:"+tipicName+", type:"+type+", subDirName:"+subDirName+", id:"+id+", textContent:"+textContent);
+        File rootFile = new File(rootDir+"/"+type, tipicName);
         if (!rootFile.exists()) {
             rootFile.mkdirs();
         }
@@ -31,9 +40,9 @@ public class FilePersistImpl implements IPersistence {
         copyStream(inputStream,  new FileOutputStream(infoFile));
 
         for (int i = 0; i < pictures.size(); i++) {
-            TopicResult.Databean.PictureUrlsbean pictureUrlsbean = pictures.get(i);
-            System.out.println("download picture :"+pictureUrlsbean.getPicUrl());
-            DownloadUtil.get().download(pictureUrlsbean.getPicUrl(), subDir.getAbsolutePath(), id+"_"+i+"."+pictureUrlsbean.getFormat());
+            JPicture picture = pictures.get(i);
+            System.out.println("download picture :"+picture.url);
+            DownloadUtil.get().download(picture.url, subDir.getAbsolutePath(), id+"_"+i+"."+picture.format);
         }
 
     }
