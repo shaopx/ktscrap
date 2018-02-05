@@ -6,7 +6,9 @@ import com.spx.dev.domain.TopicResult;
 import com.spx.dev.persist.FilePersistImpl;
 import okhttp3.*;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
 
@@ -16,31 +18,37 @@ public class TopicLoader {
     private boolean isEnd = false;
 
 
-    private static LinkedHashMap<String, String> topics = new LinkedHashMap<>();
-    static{
-        topics.put("58d8aaa439765500116ab33b", "少女馆写真有更新");
-        topics.put("5a151d2b9608fd0016c48a1d", "主要就是美女");
-        topics.put("59bd45f2d09f940016b33dd0", "美女模特高清无水印图");
-        topics.put("58b6480a2275da0014628065", "厦门校花");
-    }
-
-    private static  String topicId = "58d8aaa439765500116ab33b";
-    private static String topicName = "少女馆写真有更新";
+    private  String topicId = "";
+    private String topicName = "";
+    private String topicUrl = "";
 
     public TopicLoader() {
+        Properties prop = new Properties();
+
+        InputStream in = this.getClass().getClassLoader().getResourceAsStream(
+                "jike.prop");
+        try {
+            prop.load(in);
+            topicUrl = (String) prop.getProperty("topic.url");
+            System.out.println(topicUrl);
+            topicId = (String) prop.getProperty("topic.id");
+            topicName = (String) prop.getProperty("topic.name");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
     }
 
     public void load() throws InterruptedException, IOException {
-        while (!isEnd) {
-            loadOnce();
-            Thread.sleep(1000);
-        }
+//        while (!isEnd) {
+//            loadOnce();
+//            Thread.sleep(1000);
+//        }
     }
 
     private void loadOnce() throws IOException {
         Request request
-                = HttpManager.getJKPostJSONRequest("https://app.jike.ruguoapp.com/1.0/users/messages/history",
+                = HttpManager.getJKPostJSONRequest(topicUrl,
                 "{\"loadMoreKey\":\"" + lastId + "\",\"topic\":\""+topicId+"\"}");
         String str = HttpLoader.load(request);
         Gson gson = new Gson();
