@@ -93,4 +93,14 @@ public class HttpManager {
                 .addHeader("Host", "www.bbbmimi.com")
                 .addHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36");
     }
+
+    public static Request getLuedongRequst(String luedongUrl) {
+        return new Request.Builder()
+                .addHeader("Host", "ldapi.sogou.com")
+                .addHeader("Connection", "Keep-Alive")
+                .addHeader("User-Agent", "okhttp/3.9.1")
+                .url(luedongUrl)
+                .get()
+                .build();
+    }
 }

@@ -1,6 +1,7 @@
 package com.spx.dev;
 
 import com.google.gson.Gson;
+import com.spx.dev.domain.JPersistData;
 import com.spx.dev.domain.TopicResult;
 import com.spx.dev.persist.FilePersistImpl;
 import okhttp3.*;
@@ -20,10 +21,11 @@ public class TopicLoader {
         topics.put("58d8aaa439765500116ab33b", "少女馆写真有更新");
         topics.put("5a151d2b9608fd0016c48a1d", "主要就是美女");
         topics.put("59bd45f2d09f940016b33dd0", "美女模特高清无水印图");
+        topics.put("58b6480a2275da0014628065", "厦门校花");
     }
 
-    private static  String topicId = "59bd45f2d09f940016b33dd0";
-    private static String topicName = "美女模特高清无水印图";
+    private static  String topicId = "58d8aaa439765500116ab33b";
+    private static String topicName = "少女馆写真有更新";
 
     public TopicLoader() {
 
@@ -81,11 +83,11 @@ public class TopicLoader {
             sb.append(databean.getContent());
 
             try {
-                List<JPicture> imageUrls = new ArrayList<>();
+                List<JPersistData> imageUrls = new ArrayList<>();
                 List<TopicResult.Databean.PictureUrlsbean> pictureUrls = databean.getPictureUrls();
                 for (int i1 = 0; i1 < pictureUrls.size(); i1++) {
                     TopicResult.Databean.PictureUrlsbean pictureUrlsbean = pictureUrls.get(i1);
-                    JPicture picture = new JPicture();
+                    JPersistData picture = new JPersistData();
                     picture.url = pictureUrlsbean.getPicUrl();
                     picture.format=pictureUrlsbean.getFormat();
                     imageUrls.add(picture);

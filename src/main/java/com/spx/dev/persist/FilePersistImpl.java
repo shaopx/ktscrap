@@ -1,8 +1,7 @@
 package com.spx.dev.persist;
 
 import com.spx.dev.DownloadUtil;
-import com.spx.dev.JPicture;
-import com.spx.dev.domain.TopicResult;
+import com.spx.dev.domain.JPersistData;
 
 import java.io.*;
 import java.util.List;
@@ -18,7 +17,7 @@ public class FilePersistImpl implements IPersistence {
     }
 
     @Override
-    public void onPersist(String tipicName, String type, String subDirName, String id,  String textContent, List<JPicture> pictures) throws IOException {
+    public void onPersist(String tipicName, String type, String subDirName, String id,  String textContent, List<JPersistData> pictures) throws IOException {
         System.out.println("tipicName:"+tipicName+", type:"+type+", subDirName:"+subDirName+", id:"+id+", textContent:"+textContent);
         File rootFile = new File(rootDir+"/"+type, tipicName);
         if (!rootFile.exists()) {
@@ -32,7 +31,12 @@ public class FilePersistImpl implements IPersistence {
 
         File infoFile = new File(subDir, "info.txt");
         if (!infoFile.exists()) {
-            infoFile.createNewFile();
+            try {
+                infoFile.createNewFile();
+            } catch (Exception ex) {
+                System.out.println(subDir + " not valid!");
+                throw ex;
+            }
         }
         System.out.println("persist ==================================");
         System.out.println("persist :"+textContent);
@@ -40,9 +44,10 @@ public class FilePersistImpl implements IPersistence {
         copyStream(inputStream,  new FileOutputStream(infoFile));
 
         for (int i = 0; i < pictures.size(); i++) {
-            JPicture picture = pictures.get(i);
-            System.out.println("download picture :"+picture.url);
-            DownloadUtil.get().download(picture.url, subDir.getAbsolutePath(), id+"_"+i+"."+picture.format);
+            JPersistData persistData = pictures.get(i);
+            System.out.println("download picture :"+persistData.url);
+            DownloadUtil.get().download(persistData.url, subDir.getAbsolutePath(),
+                    id+"_"+i+"."+persistData.format, persistData);
         }
 
     }

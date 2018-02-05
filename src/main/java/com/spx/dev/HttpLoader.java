@@ -22,7 +22,7 @@ public class HttpLoader {
             if (response.isSuccessful()) {
                 byte[] bytes = response.body().bytes();
 
-                String returnStr = new String(bytes, "gbk");
+                String returnStr = new String(bytes, "utf-8");
 //                System.out.println(returnStr);
                 return returnStr;
             }

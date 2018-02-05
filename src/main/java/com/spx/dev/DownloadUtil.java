@@ -1,5 +1,6 @@
 package com.spx.dev;
 
+import com.spx.dev.domain.JPersistData;
 import com.spx.dev.persist.FilePersistImpl;
 import okhttp3.*;
 
@@ -77,7 +78,7 @@ public class DownloadUtil {
      * @param url      下载连接
      * @param saveDir  储存下载文件的SDCard目录
      */
-    public void download(final String url, final String saveDir, String name) throws IOException {
+    public void download(final String url, final String saveDir, String name, JPersistData persistData) throws IOException {
         //log拦截器 打印所有的log
 //        HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor(new HttpLoggingInterceptor.Logger() {
 //            @Override
@@ -87,20 +88,16 @@ public class DownloadUtil {
 //        });
 //        loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
         String host = url.substring(7);
+        if(url.toUpperCase().startsWith("HTTPS")){
+            host = url.substring(8);
+        }
         host = host.substring(0, host.indexOf("/"));
+        Request.Builder downloadBuilder = HttpManager.getMimiDownloadBuilder(host);
+        if(persistData.refer!=null){
+            downloadBuilder.addHeader("Referer", persistData.refer);
+        }
         Request request = //new Request.Builder().url(url).build();
-        HttpManager.getMimiDownloadBuilder(host)
-//        new Request.Builder()
-//                .addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-//                .addHeader("Accept-Encoding", "gzip, deflate, br")
-//                .addHeader("Accept-Language", "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2")
-//                .addHeader("Cache-Control", "no-cache")
-//                .addHeader("Connection", "Keep-Alive")
-//                .addHeader("Host", "cdn.ruguoapp.com")
-//                .addHeader("Pragma", "no-cache")
-//                .addHeader("Upgrade-Insecure-Requests", "1")
-//                .addHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:57.0) Gecko/20100101 Firefox/57.0")
-                .url(url).build();
+                downloadBuilder .url(url).build();
         Response response = okHttpClient.newCall(request).execute();
         InputStream is = null;
         byte[] buf = new byte[2048];
@@ -117,12 +114,13 @@ public class DownloadUtil {
             while ((len = is.read(buf)) != -1) {
                 fos.write(buf, 0, len);
                 sum += len;
-                int progress = (int) (sum * 1.0f / total * 100);
+//                int progress = (int) (sum * 1.0f / total * 100);
 //                System.out.println(""+progress);
                 // 下载中
 //                listener.onDownloading(progress);
+                fos.flush();
             }
-            fos.flush();
+
             fos.close();
             // 下载完成
 //            listener.onDownloadSuccess();
