@@ -4,12 +4,13 @@ import com.google.gson.Gson;
 import com.spx.dev.domain.JPersistData;
 import com.spx.dev.domain.TopicResult;
 import com.spx.dev.persist.FilePersistImpl;
-import okhttp3.*;
+import okhttp3.Request;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
 
 
 public class TopicLoader {

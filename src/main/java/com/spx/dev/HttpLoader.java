@@ -7,11 +7,13 @@ import okhttp3.Response;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import com.spx.dev.net.*;
 
 public class HttpLoader {
     public static String load(Request request){
         //创建连接客户端
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
+        builder.addInterceptor(new LoggingInterceptor());
         OkHttpClient client = builder.connectTimeout(30, TimeUnit.SECONDS)
                 .readTimeout(30, TimeUnit.SECONDS).build();
 
@@ -20,6 +22,7 @@ public class HttpLoader {
         try {
             Response response = call.execute();//执行
             if (response.isSuccessful()) {
+
                 byte[] bytes = response.body().bytes();
 
                 String returnStr = new String(bytes, "utf-8");
