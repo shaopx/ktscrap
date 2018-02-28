@@ -154,4 +154,33 @@ public class HttpManager {
                 .get()
                 .build();
     }
+
+    public static Request getTingshuRequest(String url) {
+        return new Request.Builder()
+                .addHeader("User-Agent", "Android6.0.1/yyting/LGE/AOSP on HammerHead/ch_huawei/153/Android")
+                .addHeader("Referer", "yytingting.com")
+                .addHeader("Host", "dapis.mting.info")
+                .addHeader("Cookie", "aliyungf_tc=AQAAACHygQc+PA4AyWfKb8JJDBLctlyR")
+                .url(url)
+                .get()
+                .build();
+    }
+
+    public static Request getCleanRequest(String url) {
+        return new Request.Builder()
+                .url(url)
+                .get()
+                .build();
+    }
+
+    public static Request getTouTiaoReadReqeust(String url) {
+        return new Request.Builder()
+                .addHeader("Host", "a1.pstatp.com")
+                .addHeader("Connection", "Keep-Alive")
+                .addHeader("User-Agent",
+                        "Dalvik/2.1.0 (Linux; U; Android 6.0.1; AOSP on HammerHead Build/M4B30Z) NewsArticle/6.5.9 cronet/58.0.2991.0")
+                .url(url)
+                .get()
+                .build();
+    }
 }

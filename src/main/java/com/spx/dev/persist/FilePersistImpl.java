@@ -46,8 +46,14 @@ public class FilePersistImpl implements IPersistence {
         for (int i = 0; i < pictures.size(); i++) {
             JPersistData persistData = pictures.get(i);
             System.out.println("download picture :"+persistData.url);
-            DownloadUtil.get().download(persistData.url, subDir.getAbsolutePath(),
-                    id+"_"+i+"."+persistData.format, persistData);
+            if(persistData.saveName==null){
+                DownloadUtil.get().download(persistData.url, subDir.getAbsolutePath(),
+                        id+"_"+i+"."+persistData.format, persistData);
+            } else {
+                DownloadUtil.get().download(persistData.url, subDir.getAbsolutePath(),
+                        persistData.saveName+"."+persistData.format, persistData);
+            }
+
         }
 
     }
