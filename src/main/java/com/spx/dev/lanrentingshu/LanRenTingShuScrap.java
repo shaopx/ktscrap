@@ -55,7 +55,11 @@ public class LanRenTingShuScrap {
             TingShuBookList.Listbean listbean = list.get(i);
             System.out.println(listbean.getBookName() + ", bookid:" + listbean.getBookId() + ", sections:" + listbean.getSections());
 
-            loadOneBook(listbean);
+            try {
+                loadOneBook(listbean);
+            }catch (Exception ex){
+                ex.printStackTrace();
+            }
         }
     }
 
