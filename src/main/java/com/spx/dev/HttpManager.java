@@ -183,4 +183,26 @@ public class HttpManager {
                 .get()
                 .build();
     }
+
+    public static Request getUGirlsPostRequest(String url, String userId, String productId) {
+        RequestBody body = RequestBody.create(MediaType.parse("application/x-www-form-urlencoded"),
+                //"UserId=4559600&Platform=android&ContentId=19592&Version=2.4.5&Auth=0&PageIndex=1&EquipmentCode=56acf4ca5e0711e698f91866da5cdd871470729629&ProductId=1888&AgentCode=ugirls&Token=de18bc80cce34f88ee56bd467d88905d&PageSize=20"
+                "UserId="+userId+"&Platform=android&Version=2.4.5&Auth=0&EquipmentCode=56acf4ca5e0711e698f91866da5cdd871470729629" +
+                        "&ProductId="+productId+"&AgentCode=ugirls&Token=de18bc80cce34f88ee56bd467d88905d"
+        );
+        try {
+            return new Request.Builder()
+                    .addHeader("Host", "api.youguoquan.com")
+                    .addHeader("Connection", "Keep-Alive")
+                    .addHeader("User-Agent", "ugirls/2.4.5(LGE AOSP on HammerHead;Android 6.0.1;1080x1776)")
+                    .addHeader("Content-Type", "application/x-www-form-urlencoded")
+                    .addHeader("Content-Length", "" + body.contentLength())
+                    .url(url)
+                    .post(body)
+                    .build();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }

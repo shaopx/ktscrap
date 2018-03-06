@@ -11,6 +11,9 @@ import com.spx.dev.net.*;
 
 public class HttpLoader {
     public static String load(Request request){
+        return load(request, "UTF-8");
+    }
+    public static String load(Request request, String encode){
         //创建连接客户端
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
         builder.addInterceptor(new LoggingInterceptor());
@@ -25,7 +28,7 @@ public class HttpLoader {
 
                 byte[] bytes = response.body().bytes();
 
-                String returnStr = new String(bytes, "utf-8");
+                String returnStr = new String(bytes, encode);
 //                System.out.println(returnStr);
                 return returnStr;
             }
