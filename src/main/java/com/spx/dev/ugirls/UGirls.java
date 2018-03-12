@@ -12,7 +12,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class UGirls {
-    FileWriter fw = new FileWriter("d:/data/ugirls/users_4.txt", true);
+    FileWriter fw = new FileWriter("d:/data/ugirls/users_3_2.txt", true);
     BufferedWriter bw;
 
     public UGirls() throws IOException {
@@ -138,7 +138,7 @@ public class UGirls {
 
     private void tryUserInfo() {
 
-        for (int i = 4000000; i <= 5000000; i++) {
+        for (int i = 3469350; i <= 4000000; i++) {
 
             try {
                 String sUserId = i + "";

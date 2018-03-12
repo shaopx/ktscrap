@@ -16,7 +16,7 @@ public class HttpLoader {
     public static String load(Request request, String encode){
         //创建连接客户端
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
-        builder.addInterceptor(new LoggingInterceptor());
+//        builder.addInterceptor(new LoggingInterceptor());
         OkHttpClient client = builder.connectTimeout(30, TimeUnit.SECONDS)
                 .readTimeout(30, TimeUnit.SECONDS).build();
 
