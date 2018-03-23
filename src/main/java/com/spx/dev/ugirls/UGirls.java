@@ -3,20 +3,70 @@ package com.spx.dev.ugirls;
 import com.google.gson.Gson;
 import com.spx.dev.HttpLoader;
 import com.spx.dev.HttpManager;
+import com.spx.dev.net.LoggingInterceptor;
+import com.spx.dev.ugirls.domain.GetDownloadUrlResult;
+import com.spx.dev.ugirls.domain.Product;
+import com.spx.dev.ugirls.domain.ProductListResult;
+import com.spx.dev.ugirls.domain.ProductTagResult;
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
+import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
+import retrofit2.Call;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class UGirls {
-    FileWriter fw = new FileWriter("d:/data/ugirls/users_3_2.txt", true);
+    FileWriter fw = new FileWriter("d:/data/ugirls/users_1_3.txt", true);
+    FileWriter downloadUrls = new FileWriter("d:/data/ugirls/urls.txt", true);
     BufferedWriter bw;
+
+    private OkHttpClient okHttpClient;
+    private Retrofit retrofit;
+    UGrilsApi api;
+    private List<Product> products = new ArrayList<>();
+
 
     public UGirls() throws IOException {
         bw = new BufferedWriter(fw);
+
+        okHttpClient = new OkHttpClient.Builder()
+                .connectTimeout(30 * 1000, TimeUnit.MILLISECONDS)
+                .writeTimeout(30 * 1000, TimeUnit.MILLISECONDS)
+                .readTimeout(30 * 1000, TimeUnit.MILLISECONDS)
+                .retryOnConnectionFailure(true)
+                .followRedirects(true)
+//                .addInterceptor(new LoggingInterceptor())
+                .build();
+
+        retrofit = new Retrofit.Builder()
+                .client(okHttpClient)
+                .baseUrl("https://api.youguoquan.com/")
+                .addConverterFactory(DecodeConverterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create())
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .build();
+
+        api = retrofit.create(UGrilsApi.class);
     }
 
     public void download(String userId, String productId) {
@@ -27,7 +77,7 @@ public class UGirls {
         String str = HttpLoader.load(request, "UTF-8");
         Gson gson = new Gson();
 
-        String decode = decode(str);
+        String decode = UGrilUtil.decode(str);
         if (decode.contains("对不起,您没有权限进行下载")) {
             System.out.println(userId + ", " + decode);
         } else {
@@ -36,55 +86,194 @@ public class UGirls {
         }
     }
 
-    /**
-     * unicode转中文
-     *
-     * @param str
-     * @return
-     * @author yutao
-     * @date 2017年1月24日上午10:33:25
-     */
-    public static String unicodeToString(String str) {
-
-        Pattern pattern = Pattern.compile("(\\\\u(\\p{XDigit}{4}))");
-
-        Matcher matcher = pattern.matcher(str);
-
-        char ch;
-
-        while (matcher.find()) {
-
-            ch = (char) Integer.parseInt(matcher.group(2), 16);
-
-            str = str.replace(matcher.group(1), ch + "");
-
-        }
-
-        return str;
-
-    }
-
-    public static String decode(String output) {
-        output = EncrypterUtil.AESDecrypt(EncrypterUtil.getKey(), output);
-        output = unicodeToString(output);
-        return output;
-    }
 
     public static void main(String[] args) throws IOException {
-//        String json = "pUKkI+c5FnHWZp7HuM6lojGOXds2CREWhrPodskkfuv76JG59DPOC2NNKjx1AST/YOhAoyttitrGnmwjsALsBoKXVlrHy9AxzgPVN3DZyroWlKVZKevU95ztqNfvOcZNZ01Cpdg7sudDGj2wTI0c+3lwNTFAaYaYN/8OuQAoLkWaxtUM55mcQOmBTDj4xVD0bfbjuoiLxt6BQRoYWJGmuZ48JewuEt8qnDOD4/98vBch6tqZaVFatl06NPftztO/iY9hcnR9wEHs97KuN0W36HIbh+zYn2kgdqMsubQSxIyg2Y4PcbljPsCPQ0ZwxnqS8wf1PzKBFd6eubW5Dm7k7r2T2w6+1NPVPv1sgH3+j6IAWQlV74p5bk3e99pO0KMBc9UG8OQg0HCUzRNIrvZV0yUme4DQaC/6h4dHboZ+T37UgLfyfCXbO7C0JR19dvkAIoUOcLfZUcA2vuxdraXnzyLJphCebONEwwFj9CHnd2PzL7OFVIewp5/WHO9AHEUTdG+zfxKNbnClLErHRCDNzAMEzyogWIT3YbWiB/sD2m4bnejM9f61ibFZ6QbbP9lUuT0zjzghFcQRvh8wYWK9ItM5TJ4oNamKi5a2MlAFaYav0ojsywQ/A4z1ShTv69Vr0xNB0KVOBIU1+7bN3q/B22DLskcVJQCNmXMZnkY6Zr99mJR4Ib8x27wznkjWVr3qXQnXeTb1L/I9rcvvTv1Q2Vt2BJAqTJ5iutUUuH/S+lDDgOD5bzvSjhVpCvk/TFn7W5y0ECKzNnR30FRQql86pUVM+RS+fDrC1zkJ98ZSkRwD5a7HG4/et+FArp7SY+qONDRUYFGBrCnTtD1Y9w/DQkm+AIM4TQdEnoJB5nn5yjhbE5QFkm3LKwqoTYj6LXzk1AQN42ppMFOuDD5/mZZG54Pc1Kp2TxKQGRp9s538FlG4ig16dWPjuQ5YNXG/iJCFsUx0aTHwzxl/l+7AZ+qQvxIV+8pdRNprEt+ZeqUOmEWJastvgn16K06MUZ5dDr2d0rqGrfzpcRRZyH2EDCozQWWDNMq3TQPn8zY3aY8KgDECMrRP5/aVo+NJ8n5iVFX3ZQB+tFXhqdx1srdc1lAI3JNC0erVYAcihpwU4VCoA7gaOREQJymqrbavt5GZEREwL7AAQhwVQBREP3ByvQtRbfFqZlAXzidX5kdfUBwnXSFmNMhGxpurXh+8vg910ljLxVjGc3gTFeosTi4nXTa/Ew5xma8QyuNeHhQs9EpVxeopnEs6q8Wwm8w2KnfD8MQbTQCS/eDybUzyI3x7Rbw3+w==";
-//        try {
-//            json = EncrypterUtil.AESDecrypt(EncrypterUtil.getKey(), json);
-//            json = unicodeToString(json);
-//            System.out.println("onCreate: json:" + json);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//
-//        System.out.println("我是中文");
+        String json = "SBhh9ZfGEz++o5Va088OAEaP0jR9pZ6BXM8sAD6x56SJastvgn16K06MUZ5dDr2dAeazk02ctRAq6KjLGJdi9DmRN5hcMchY7Dh/LOeG0u89SfgdShiRml0Gei/NzT7jfBrbh03zjbFxIFuWxxfVMbWjd1foIqcnnTJaxy3UTMeDaS56eYvcdVz5j/OWLxLbhKq06qoAMlwtgACVo8l0bX+35YEJqsg05Kog4D4mK13IHQkl20gZmAmmAPUu5uDAwau4w0GADpJraQeQdaUJnGPKc07G4TJ/vs1/CR4bhiebC2QC2+dP9sdmjXrbM8il";
+        try {
+            json = EncrypterUtil.AESDecrypt(EncrypterUtil.getKey(), json);
+            json = UGrilUtil.unicodeToString(json);
+            System.out.println(json);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+//        System.setProperty("http.proxyHost", "127.0.0.1");
+//        System.setProperty("https.proxyHost", "127.0.0.1");
+//        System.setProperty("http.proxyPort", "8888");
+//        System.setProperty("https.proxyPort", "8888");
+
 
         UGirls uGirls = new UGirls();
-        uGirls.tryUserInfo();
+        uGirls.getProductTags();
+
+        uGirls.getAllProducts();
+//        uGirls.tryUserInfo();
 //        uGirls.getUserInfo("2000152");
+    }
+
+    private void getAllProducts() {
+//        for (int i = 0; i < tagIds.size(); i++) {
+//            int tagId = tagIds.get(i);
+//            try {
+//                getAlbumlist(tagId);
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
+
+//        try {
+//            Product product = new Product();
+//            product.tagName = "推荐";
+//            product.tagId = -1001;
+//            getAlbumlist(product);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+    }
+
+    public void getOneProdct(ProductListResult.SpecialListbean specialListbean) throws IOException {
+        Map<String, String> parms
+                = converToParams("UserId=4000057&Platform=android&Version=2.4.5&Auth=0" +
+                "&EquipmentCode=56acf4ca5e0711e698f91866da5cdd871470729629" +
+                "&ProductId=" + specialListbean.getIProductId() +
+                "&AgentCode=ugirls&Token=4e77af0ca26d236ff0e632c43241e3dc");
+
+        Call<GetDownloadUrlResult> call = api.getDownloadUrl(parms);
+        Response<GetDownloadUrlResult> execute = call.execute();
+        GetDownloadUrlResult downloadUrlResult = execute.body();
+        if (downloadUrlResult.getStatus() == 1) {
+            String downloadUrl = downloadUrlResult.getUrl();
+            if (downloadUrl != null) {
+                // 下载文件:downloadUrl
+                downloadUrls.append(downloadUrl + "\r\n");
+            }
+        } else {
+            System.out.println("get download fail. productId:" + specialListbean.getIProductId());
+        }
+    }
+
+    private void getAlbumlist(Product product) throws IOException {
+
+        int pageSize = 200;
+        int pageIndex = product.nextPage;
+        while (product.totalCount > product.loadedCount) {
+            Map<String, String> parms
+                    = converToParams(
+                    "UserId=4000057&SectionId=3&Platform=android" +
+                            "&TagId=" + product.tagId +
+                            "&CategoryId=1000" +
+                            "&Version=2.4.5&Auth=0" +
+                            "&PageIndex=" + product.nextPage +
+                            "&EquipmentCode=56acf4ca5e0711e698f91866da5cdd871470729629" +
+                            "&Token=4e77af0ca26d236ff0e632c43241e3dc&AgentCode=ugirls&PageSize=" + pageSize);
+
+            Call<ProductListResult> call = api.GetListByTagId(parms);
+            Response<ProductListResult> execute = call.execute();
+            ProductListResult productListResult = execute.body();
+
+            int status = productListResult.getStatus();
+
+            if (status == 1) {
+                String count = productListResult.getCount();
+                product.totalCount = Integer.parseInt(count);
+                List<ProductListResult.SpecialListbean> specialList = productListResult.getSpecialList();
+                product.loadedCount += specialList.size();
+                System.out.println("totalCount:" + count + ", loadedCount:" + product.loadedCount + ", pageIdex:" + product.nextPage);
+                product.nextPage++;
+            } else {
+                System.err.println("id:" + product.tagId + ", " + product.tagName + ", page: " + pageIndex + " fail!");
+                break;
+            }
+        }
+
+
+    }
+
+    private void getProductTags() throws IOException {
+
+        Map<String, String> parms = converToParams("SectionCategoryId=1000&UserId=4000057&Type=1&Platform=android&Version=2.4.5&Auth=0&EquipmentCode=56acf4ca5e0711e698f91866da5cdd871470729629&Token=4e77af0ca26d236ff0e632c43241e3dc&AgentCode=ugirls");
+//        Observable<ProductTagResult> productTag = api.getProductTag(parms);
+//        api.getProductTag(parms)
+//                .observeOn(Schedulers.newThread())
+//                .subscribe(new Observer<ProductTagResult>() {
+//
+//            @Override
+//            public void onSubscribe(Disposable d) {
+//                System.out.println("onSubscribe........");
+//            }
+//
+//            @Override
+//            public void onNext(ProductTagResult productTagResult) {
+//                System.out.println("onNext........");
+//                List<ProductTagResult.TagListbean> tagList = productTagResult.getTagList();
+//                System.out.println(tagList.size());
+//                for (ProductTagResult.TagListbean tagListbean : tagList) {
+//                    System.out.println(tagListbean.getSTagName() + ", id:" + tagListbean.getITagId());
+//                }
+//            }
+//
+//            @Override
+//            public void onError(Throwable t) {
+//                System.out.println("onError........");
+//            }
+//
+//            @Override
+//            public void onComplete() {
+//                System.out.println("onComplete........");
+//            }
+//        });
+
+
+        Call<ProductTagResult> call = api.getProductTag(parms);
+        Response<ProductTagResult> execute = call.execute();
+        ProductTagResult productTagResult = execute.body();
+        List<ProductTagResult.TagListbean> tagList = productTagResult.getTagList();
+        System.out.println(tagList.size());
+        for (ProductTagResult.TagListbean tagListbean : tagList) {
+            System.out.println(tagListbean.getSTagName() + ", id:" + tagListbean.getITagId());
+            Product product = new Product();
+            product.tagId = tagListbean.getITagId();
+            product.tagName = tagListbean.getSTagName();
+            products.add(product);
+        }
+    }
+
+    private Map<String, String> converToParams(String str) {
+        Map<String, String> result = new HashMap<>();
+        String[] split = str.split("&");
+        for (String s : split) {
+            if (s.contains("=")) {
+                String key = s.substring(0, s.indexOf("="));
+                String value = s.substring(s.indexOf("=") + 1);
+                result.put(key, value);
+            }
+        }
+        return result;
+    }
+
+    private void getHomeData() {
+//        try {
+//            String url = "https://api.youguoquan.com/Users/Common/GetInfo";
+//
+//            Request request
+//                    = HttpManager.getUGirlsPostRequest(url, userId, "1888");
+//            String str = HttpLoader.load(request, "UTF-8");
+//            Gson gson = new Gson();
+//
+//            String decode = decode(str);
+//            appendData(userId + "," + decode);
+//
+//            UserInfo userInfo = gson.fromJson(decode, UserInfo.class);
+//            UserInfo.UserInfoBean realInfo = userInfo.getUserInfo();
+//            String dBalance = realInfo.getDBalance();
+//            UserInfo.UserInfoBean.RoleBean role = realInfo.getRole();
+//            int iIsVip = role.getIIsVip();
+//            System.out.println(userId + ", balance:" + dBalance + ", vip:" + iIsVip + "," + decode);
+//
+//        } catch (Exception ex) {
+//            ex.printStackTrace();
+//            appendData(userId + ",FAIL");
+//        }
     }
 
     public void appendData(String str) {
@@ -106,7 +295,7 @@ public class UGirls {
             String str = HttpLoader.load(request, "UTF-8");
             Gson gson = new Gson();
 
-            String decode = decode(str);
+            String decode = UGrilUtil.decode(str);
             appendData(userId + "," + decode);
 
             UserInfo userInfo = gson.fromJson(decode, UserInfo.class);
@@ -138,7 +327,7 @@ public class UGirls {
 
     private void tryUserInfo() {
 
-        for (int i = 3469350; i <= 4000000; i++) {
+        for (int i = 1387598; i <= 2000000; i++) {
 
             try {
                 String sUserId = i + "";

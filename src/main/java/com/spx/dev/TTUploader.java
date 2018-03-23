@@ -17,7 +17,7 @@ public class TTUploader {
 //        System.getProperties().setProperty("http.proxyPort", "8888");
 
         TTUploader uploader = new TTUploader();
-        uploader.read();
+        uploader.upload();
     }
 
     private void read(){
