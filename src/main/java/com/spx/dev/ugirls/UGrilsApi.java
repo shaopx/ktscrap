@@ -4,6 +4,7 @@ import com.spx.dev.ugirls.domain.GetDownloadUrlResult;
 import com.spx.dev.ugirls.domain.ProductListResult;
 import com.spx.dev.ugirls.domain.ProductTagResult;
 //import io.reactivex.Observable;
+import com.spx.dev.ugirls.domain.PurchaseResult;
 import io.reactivex.Observable;
 import retrofit2.Call;
 import retrofit2.http.FieldMap;
@@ -27,4 +28,10 @@ public interface UGrilsApi {
     @FormUrlEncoded
     @POST("Users/Common/DownLoad")
     Call<GetDownloadUrlResult> getDownloadUrl(@FieldMap Map<String, String> params);
+
+    @FormUrlEncoded
+    @POST("Users/Finance/Purchase")
+    Call<PurchaseResult> purchase(@FieldMap Map<String, String> params);
+
+
 }

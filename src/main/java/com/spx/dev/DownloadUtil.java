@@ -5,10 +5,7 @@ import com.spx.dev.persist.FilePersistImpl;
 import okhttp3.*;
 
 import javax.net.ssl.*;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -27,14 +24,14 @@ public class DownloadUtil {
     }
 
     private DownloadUtil() {
-        okHttpClient =  getUnsafeOkHttpClient();
+        okHttpClient = getUnsafeOkHttpClient();
 //                .build();
     }
 
     private static OkHttpClient getUnsafeOkHttpClient() {
         try {
             // Create a trust manager that does not validate certificate chains
-            final TrustManager[] trustAllCerts = new TrustManager[] {
+            final TrustManager[] trustAllCerts = new TrustManager[]{
                     new X509TrustManager() {
                         @Override
                         public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) {
@@ -74,9 +71,68 @@ public class DownloadUtil {
         }
     }
 
+    public void download(final String url, final String saveDir, final String fileName, final String info) {
+        System.out.println("start download url:" + url);
+        System.out.println("start download saveDir:" + saveDir);
+        System.out.println("start download fileName:" + fileName);
+        Request request = new Request.Builder().url(url).build();
+        okHttpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                InputStream is = null;
+                byte[] buf = new byte[2048];
+                int len = 0;
+                FileOutputStream fos = null;
+                //储存下载文件的目录
+                String savePath = isExistDir(saveDir);
+                try {
+                    is = response.body().byteStream();
+                    long total = response.body().contentLength();
+                    File file = new File(savePath, fileName);
+                    fos = new FileOutputStream(file);
+                    long sum = 0;
+                    while ((len = is.read(buf)) != -1) {
+                        fos.write(buf, 0, len);
+                        sum += len;
+                        int progress = (int) (sum * 1.0f / total * 100);
+                    }
+                    fos.flush();
+                    //下载完成
+
+                    File infoFile = new File(savePath, "info.txt");
+                    PrintWriter pw = new PrintWriter(infoFile);
+                    pw.write(info);
+                    pw.close();
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    try {
+                        if (is != null)
+                            is.close();
+                    } catch (IOException e) {
+
+                    }
+                    try {
+                        if (fos != null) {
+                            fos.close();
+                        }
+                    } catch (IOException e) {
+
+                    }
+                }
+            }
+        });
+    }
+
     /**
-     * @param url      下载连接
-     * @param saveDir  储存下载文件的SDCard目录
+     * @param url     下载连接
+     * @param saveDir 储存下载文件的SDCard目录
      */
     public void download(final String url, final String saveDir, String name, JPersistData persistData) throws IOException {
         //log拦截器 打印所有的log
@@ -88,16 +144,16 @@ public class DownloadUtil {
 //        });
 //        loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
         String host = url.substring(7);
-        if(url.toUpperCase().startsWith("HTTPS")){
+        if (url.toUpperCase().startsWith("HTTPS")) {
             host = url.substring(8);
         }
         host = host.substring(0, host.indexOf("/"));
         Request.Builder downloadBuilder = HttpManager.getMimiDownloadBuilder(host);
-        if(persistData.refer!=null){
+        if (persistData.refer != null) {
             downloadBuilder.addHeader("Referer", persistData.refer);
         }
         Request request = //new Request.Builder().url(url).build();
-                downloadBuilder .url(url).build();
+                downloadBuilder.url(url).build();
         Response response = okHttpClient.newCall(request).execute();
         InputStream is = null;
         byte[] buf = new byte[2048];
@@ -172,7 +228,7 @@ public class DownloadUtil {
      * @return 从下载连接中解析出文件名
      */
     private String getNameFromUrl(String id, int index) {
-        return id+"_"+index+".jpeg";
+        return id + "_" + index + ".jpeg";
     }
 
     public interface OnDownloadListener {
