@@ -205,4 +205,47 @@ public class HttpManager {
         }
         return null;
     }
+
+    public static Request getKingGetRequest(String url, String uidStr) {
+        return new Request.Builder()
+                .addHeader("Host", "my.iciba.com")
+                .addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:56.0) Gecko/20100101 Firefox/56.0")
+                .addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+                .addHeader("Accept-Language", "zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3")
+//                .addHeader("Accept-Encoding", "gzip, deflate")
+                .addHeader("Upgrade-Insecure-Requests", "1")
+//                .addHeader("Cookie", "UM_distinctid=161e4cfc019519-0506bda195d52b8-12666d4a-1fa400-161e4cfc01a456; CNZZDATA30066320=cnzz_eid%3D1176478720-1519957014-%26ntime%3D1519957014")
+                .url(url)
+                .get()
+                .build();
+    }
+
+    public static Request getXRSGetRequest(String url) {
+        return new Request.Builder()
+                .addHeader("Host", "api.bmob.cn")
+                .addHeader("X-Bmob-Application-Id", "9e441b998f89368cc102c01306fa92ae")
+                .addHeader("X-Bmob-REST-API-Key", "a17a32506201029ffb7d0bb4921f0e45")
+                .addHeader("Content-Type", "application/json")
+                .url(url)
+                .get()
+                .build();
+    }
+
+    public static Request getKaiShuRequest(String url, int uid) {
+        return new Request.Builder()
+                .addHeader("token", "{\"to\":2523702806323,\"rd\":\"231523702807323\",\"il\":true,\"aid\":\"992099001\",\"userid\":\""+"96001204"+"\"}|MDE2MzM1NTFDMjhDN0IxNzYyQ0YwQ0E5QjRGMTUyQkI=")
+                .addHeader("deviceid", "676775F6AB93235835EA855592E9AE68")
+                .addHeader("appversion", "4.2.0")
+                .addHeader("Accept-Encoding", "identity")
+                .addHeader("apiver", "2.4")
+                .addHeader("userid", "96001204")
+                .addHeader("appid", "992099001")
+                .addHeader("channelid", "yingyongbao")
+                .addHeader("Host", "api.kaishustory.com")
+                .addHeader("Connection", "Keep-Alive")
+                .addHeader("User-Agent", "okhttp/3.4.1")
+                .url(url)
+                .get()
+                .build();
+    }
 }

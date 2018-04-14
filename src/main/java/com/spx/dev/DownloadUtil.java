@@ -85,15 +85,23 @@ public class DownloadUtil {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 InputStream is = null;
-                byte[] buf = new byte[2048];
-                int len = 0;
                 FileOutputStream fos = null;
-                //储存下载文件的目录
-                String savePath = isExistDir(saveDir);
                 try {
+                    if (response.code() == 503) {
+                        System.out.println("下载" + url + "失败!  503");
+                        return;
+                    }
+
+                    byte[] buf = new byte[2048];
+                    int len = 0;
+
+                    //储存下载文件的目录
+                    String savePath = isExistDir(saveDir);
+
                     is = response.body().byteStream();
                     long total = response.body().contentLength();
                     File file = new File(savePath, fileName);
+                    System.out.println("start download final fileName:" + file.getAbsolutePath());
                     fos = new FileOutputStream(file);
                     long sum = 0;
                     while ((len = is.read(buf)) != -1) {
@@ -104,13 +112,17 @@ public class DownloadUtil {
                     fos.flush();
                     //下载完成
 
-                    File infoFile = new File(savePath, "info.txt");
-                    PrintWriter pw = new PrintWriter(infoFile);
-                    pw.write(info);
-                    pw.close();
+                    if (!Util.isNull(info)) {
+                        File infoFile = new File(savePath, "info.txt");
+                        PrintWriter pw = new PrintWriter(infoFile);
+                        pw.write(info);
+                        pw.close();
+                    }
+
 
                 } catch (Exception e) {
                     e.printStackTrace();
+                    System.err.println("fileName:" + fileName + " download fail!"+e.getMessage());
                 } finally {
                     try {
                         if (is != null)
@@ -122,6 +134,7 @@ public class DownloadUtil {
                         if (fos != null) {
                             fos.close();
                         }
+                        response.close();
                     } catch (IOException e) {
 
                     }
@@ -217,8 +230,8 @@ public class DownloadUtil {
     private String isExistDir(String saveDir) throws IOException {
         // 下载位置
         File downloadFile = new File(saveDir);
-        if (!downloadFile.mkdirs()) {
-            downloadFile.createNewFile();
+        if (!downloadFile.exists()) {
+            downloadFile.mkdirs();
         }
         String savePath = downloadFile.getAbsolutePath();
         return savePath;
@@ -229,6 +242,18 @@ public class DownloadUtil {
      */
     private String getNameFromUrl(String id, int index) {
         return id + "_" + index + ".jpeg";
+    }
+
+    public static String getFileName(String url) {
+        if (url.contains("//")) {
+            int i = url.lastIndexOf("//");
+            if (i < url.length() - 1) {
+                String fileName = url.substring(i + 1);
+                return fileName;
+            }
+
+        }
+        return null;
     }
 
     public interface OnDownloadListener {
